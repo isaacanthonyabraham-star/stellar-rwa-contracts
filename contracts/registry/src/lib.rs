@@ -922,7 +922,7 @@ impl RegistryContract {
         let mut skipped: u32 = 0;
         let mut out = Vec::new(&env);
         let mut id: u64 = 1;
-        while id <= counter && (out.len() as u32) < capped {
+        while id <= counter && out.len() < capped {
             if let Some(entry) = env
                 .storage()
                 .persistent()
@@ -1082,22 +1082,6 @@ impl RegistryContract {
         }
     }
 
-    /// Resolve a list of asset ids to their entries, extending each TTL.
-    fn fetch_assets(env: &Env, ids: &Vec<u64>) -> Vec<AssetEntry> {
-        let mut out = Vec::new(env);
-        for id in ids.iter() {
-            if let Some(entry) = env.storage().persistent().get(&DataKey::Asset(id)) {
-                env.storage().persistent().extend_ttl(
-                    &DataKey::Asset(id),
-                    INSTANCE_LIFETIME_THRESHOLD,
-                    INSTANCE_BUMP_AMOUNT,
-                );
-                out.push_back(entry);
-            }
-        }
-        out
-    }
-
     /// Resolve a paginated slice of an id list to asset entries, extending TTLs.
     /// `offset` is the 0-based start index into `ids`; `limit` is the maximum
     /// number of entries to return (caller is responsible for clamping to
@@ -1196,8 +1180,8 @@ fn validate_asset_type(env: &Env, asset_type: &String) {
         let v = valid.as_bytes();
         if bytes.len() as usize == v.len() {
             let mut matches = true;
-            for i in 0..v.len() {
-                if bytes.get(i as u32).unwrap_or(0) != v[i] {
+            for (byte, expected) in bytes.iter().zip(v.iter()) {
+                if byte != *expected {
                     matches = false;
                     break;
                 }

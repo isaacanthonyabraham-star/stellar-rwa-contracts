@@ -256,7 +256,7 @@ proptest! {
         let (env, client, admin) = setup();
         let mut active_ids = Vec::new(&env);
         for op in ops {
-            if active_ids.len() == 0 || op.0 % 2 == 0 {
+            if active_ids.is_empty() || op.0 % 2 == 0 {
                 let issuer = Address::generate(&env);
                 let token = Address::generate(&env);
                 let id = client.register_asset(
